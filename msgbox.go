@@ -26,6 +26,14 @@ const (
 	ButtonYesNoCancel      Button = Button(walk.MsgBoxYesNoCancel)
 )
 
+type DefaultButton uint
+
+const (
+	DefaultButton1 DefaultButton = DefaultButton(walk.MsgBoxDefButton1)
+	DefaultButton2 DefaultButton = DefaultButton(walk.MsgBoxDefButton2)
+	DefaultButton3 DefaultButton = DefaultButton(walk.MsgBoxDefButton3)
+)
+
 type Icon uint
 
 const (
@@ -40,21 +48,35 @@ const (
 )
 
 type msgBox struct {
-	Text    string
-	Caption string
-	Icon    Icon
-	Button  Button
-	Result  Result
+	OwnerForm     *walk.Form
+	Text          string
+	Caption       string
+	Icon          Icon
+	Button        Button
+	DefaultButton DefaultButton
+	Result        Result
 }
 
 func New() *msgBox {
 	return &msgBox{
-		Text:    "",
-		Caption: "",
-		Icon:    IconNone,
-		Button:  ButtonOK,
-		Result:  ResultNone,
+		OwnerForm:     nil,
+		Text:          "",
+		Caption:       "",
+		Icon:          IconNone,
+		Button:        ButtonOK,
+		DefaultButton: DefaultButton1,
+		Result:        ResultNone,
 	}
+}
+
+func (mb *msgBox) Owner(owner *walk.Form) *msgBox {
+	mb.OwnerForm = owner
+	return mb
+}
+
+func Owner(owner *walk.Form) *msgBox {
+	mb := New()
+	return mb.Owner(owner)
 }
 
 func (mb *msgBox) Show(text1caption2 ...string) *msgBox {
@@ -64,7 +86,13 @@ func (mb *msgBox) Show(text1caption2 ...string) *msgBox {
 			mb.Caption = text1caption2[1]
 		}
 	}
-	mb.Result = Result(walk.MsgBox(nil, mb.Caption, mb.Text, walk.MsgBoxStyle(mb.Icon)|walk.MsgBoxStyle(mb.Button)))
+	var owner walk.Form
+	if mb.OwnerForm != nil {
+		owner = *mb.OwnerForm
+	} else {
+		owner = nil
+	}
+	mb.Result = Result(walk.MsgBox(owner, mb.Caption, mb.Text, walk.MsgBoxStyle(mb.Icon)|walk.MsgBoxStyle(mb.Button)|walk.MsgBoxStyle(mb.DefaultButton)))
 	return mb
 }
 
@@ -182,37 +210,102 @@ func YesNoCancel() *msgBox {
 }
 
 // ----------------------------------------------------------------
+//  DefaultButton
+// ----------------------------------------------------------------
+func (mb *msgBox) DefBtn1() *msgBox {
+	mb.DefaultButton = DefaultButton1
+	return mb
+}
+
+func DefBtn1() *msgBox {
+	mb := New()
+	return mb.DefBtn1()
+}
+
+func (mb *msgBox) DefBtn2() *msgBox {
+	mb.DefaultButton = DefaultButton2
+	return mb
+}
+
+func DefBtn2() *msgBox {
+	mb := New()
+	return mb.DefBtn2()
+}
+
+func (mb *msgBox) DefBtn3() *msgBox {
+	mb.DefaultButton = DefaultButton3
+	return mb
+}
+
+func DefBtn3() *msgBox {
+	mb := New()
+	return mb.DefBtn2()
+}
+
+// ----------------------------------------------------------------
 //  Result
 // ----------------------------------------------------------------
 
+func (r *Result) IsNone() bool {
+	return *r == ResultNone
+}
+
+func (r *Result) IsOK() bool {
+	return *r == ResultOK
+}
+
+func (r *Result) IsCancel() bool {
+	return *r == ResultCancel
+}
+
+func (r *Result) IsYes() bool {
+	return *r == ResultYes
+}
+
+func (r *Result) IsNo() bool {
+	return *r == ResultNo
+}
+
+func (r *Result) IsAbort() bool {
+	return *r == ResultAbort
+}
+
+func (r *Result) IsIgnore() bool {
+	return *r == ResultIgnore
+}
+
+func (r *Result) IsRetry() bool {
+	return *r == ResultRetry
+}
+
 func (mb *msgBox) IsNone() bool {
-	return mb.Result == ResultNone
+	return mb.Result.IsNone()
 }
 
 func (mb *msgBox) IsOK() bool {
-	return mb.Result == ResultOK
+	return mb.Result.IsOK()
 }
 
 func (mb *msgBox) IsCancel() bool {
-	return mb.Result == ResultCancel
+	return mb.Result.IsCancel()
 }
 
 func (mb *msgBox) IsYes() bool {
-	return mb.Result == ResultYes
+	return mb.Result.IsYes()
 }
 
 func (mb *msgBox) IsNo() bool {
-	return mb.Result == ResultNo
+	return mb.Result.IsNo()
 }
 
 func (mb *msgBox) IsAbort() bool {
-	return mb.Result == ResultAbort
+	return mb.Result.IsAbort()
 }
 
 func (mb *msgBox) IsIgnore() bool {
-	return mb.Result == ResultIgnore
+	return mb.Result.IsIgnore()
 }
 
 func (mb *msgBox) IsRetry() bool {
-	return mb.Result == ResultRetry
+	return mb.Result.IsRetry()
 }
