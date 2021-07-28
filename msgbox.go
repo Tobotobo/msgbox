@@ -86,11 +86,9 @@ func (mb *msgBox) Show(text1caption2 ...string) *msgBox {
 			mb.Caption = text1caption2[1]
 		}
 	}
-	var owner walk.Form
+	var owner walk.Form = nil
 	if mb.OwnerForm != nil {
 		owner = *mb.OwnerForm
-	} else {
-		owner = nil
 	}
 	mb.Result = Result(walk.MsgBox(owner, mb.Caption, mb.Text, walk.MsgBoxStyle(mb.Icon)|walk.MsgBoxStyle(mb.Button)|walk.MsgBoxStyle(mb.DefaultButton)))
 	return mb
