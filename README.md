@@ -1,7 +1,7 @@
 # msgbox
 golang msgbox
 
-一番簡単な使い方
+一番シンプルな使い方
 ``` go
 package main
 
