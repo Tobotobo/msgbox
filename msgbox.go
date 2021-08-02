@@ -46,6 +46,14 @@ const (
 	ButtonYesNoCancel      Button = Button(walk.MsgBoxYesNoCancel)
 )
 
+type DefaultButton uint
+
+const (
+	DefaultButton1 DefaultButton = DefaultButton(walk.MsgBoxDefButton1)
+	DefaultButton2 DefaultButton = DefaultButton(walk.MsgBoxDefButton2)
+	DefaultButton3 DefaultButton = DefaultButton(walk.MsgBoxDefButton3)
+)
+
 type Icon uint
 
 const (
@@ -60,11 +68,12 @@ const (
 )
 
 type msgBox struct {
-	Owner   win.HWND
-	Text    string
-	Caption string
-	Icon    Icon
-	Button  Button
+	Owner         win.HWND
+	Text          string
+	Caption       string
+	Icon          Icon
+	Button        Button
+	DefaultButton DefaultButton
 }
 
 type MsgBox struct {
@@ -75,14 +84,25 @@ type MsgBox struct {
 func New() *MsgBox {
 	return &MsgBox{
 		InnerValue: msgBox{
-			Owner:   0,
-			Text:    "",
-			Caption: "",
-			Icon:    IconNone,
-			Button:  ButtonOK,
+			Owner:         0,
+			Text:          "",
+			Caption:       "",
+			Icon:          IconNone,
+			Button:        ButtonOK,
+			DefaultButton: DefaultButton1,
 		},
 		Result: ResultNone,
 	}
+}
+
+func (mb *MsgBox) Owner(owner win.HWND) *MsgBox {
+	mb.InnerValue.Owner = owner
+	return mb
+}
+
+func Owner(owner win.HWND) *MsgBox {
+	mb := New()
+	return mb.Owner(owner)
 }
 
 func (mb *MsgBox) Show(text1caption2 ...string) *MsgBox {
@@ -92,7 +112,7 @@ func (mb *MsgBox) Show(text1caption2 ...string) *MsgBox {
 			mb.InnerValue.Caption = text1caption2[1]
 		}
 	}
-	mb.Result = Result(show(mb.InnerValue.Owner, mb.InnerValue.Caption, mb.InnerValue.Text, uint32(mb.InnerValue.Icon)|uint32(mb.InnerValue.Button)))
+	mb.Result = Result(show(mb.InnerValue.Owner, mb.InnerValue.Caption, mb.InnerValue.Text, uint32(mb.InnerValue.Icon)|uint32(mb.InnerValue.Button)|uint32(mb.InnerValue.DefaultButton)))
 	return mb
 }
 
@@ -218,6 +238,39 @@ func YesNoCancel() *MsgBox {
 }
 
 // ----------------------------------------------------------------
+//  DefaultButton
+// ----------------------------------------------------------------
+func (mb *MsgBox) DefBtn1() *MsgBox {
+	mb.InnerValue.DefaultButton = DefaultButton1
+	return mb
+}
+
+func DefBtn1() *MsgBox {
+	mb := New()
+	return mb.DefBtn1()
+}
+
+func (mb *MsgBox) DefBtn2() *MsgBox {
+	mb.InnerValue.DefaultButton = DefaultButton2
+	return mb
+}
+
+func DefBtn2() *MsgBox {
+	mb := New()
+	return mb.DefBtn2()
+}
+
+func (mb *MsgBox) DefBtn3() *MsgBox {
+	mb.InnerValue.DefaultButton = DefaultButton3
+	return mb
+}
+
+func DefBtn3() *MsgBox {
+	mb := New()
+	return mb.DefBtn2()
+}
+
+// ----------------------------------------------------------------
 //  Result
 // ----------------------------------------------------------------
 
@@ -251,4 +304,36 @@ func (mb *MsgBox) IsIgnore() bool {
 
 func (mb *MsgBox) IsRetry() bool {
 	return mb.Result == ResultRetry
+}
+
+func (r *Result) IsNone() bool {
+	return *r == ResultNone
+}
+
+func (r *Result) IsOK() bool {
+	return *r == ResultOK
+}
+
+func (r *Result) IsCancel() bool {
+	return *r == ResultCancel
+}
+
+func (r *Result) IsYes() bool {
+	return *r == ResultYes
+}
+
+func (r *Result) IsNo() bool {
+	return *r == ResultNo
+}
+
+func (r *Result) IsAbort() bool {
+	return *r == ResultAbort
+}
+
+func (r *Result) IsIgnore() bool {
+	return *r == ResultIgnore
+}
+
+func (r *Result) IsRetry() bool {
+	return *r == ResultRetry
 }
