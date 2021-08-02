@@ -1,6 +1,26 @@
+// msgbox.go
+// Copyright (c) 2021 Tobotobo
+// This software is released under the MIT License.
+// http://opensource.org/licenses/mit-license.php
+
+// Copyright 2010 The Walk Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+// https://github.com/lxn/walk/blob/master/LICENSE
+
+// +build windows
+
+//lint:file-ignore SA1019 syscall.StringToUTF16Ptr を使用します
+
 package msgbox
 
-import "github.com/lxn/walk"
+import (
+	"strings"
+	"syscall"
+
+	"github.com/lxn/walk"
+	"github.com/lxn/win"
+)
 
 type Result uint
 
@@ -40,79 +60,95 @@ const (
 )
 
 type msgBox struct {
+	Owner   win.HWND
 	Text    string
 	Caption string
 	Icon    Icon
 	Button  Button
-	Result  Result
 }
 
-func New() *msgBox {
-	return &msgBox{
-		Text:    "",
-		Caption: "",
-		Icon:    IconNone,
-		Button:  ButtonOK,
-		Result:  ResultNone,
+type MsgBox struct {
+	InnerValue msgBox
+	Result     Result
+}
+
+func New() *MsgBox {
+	return &MsgBox{
+		InnerValue: msgBox{
+			Owner:   0,
+			Text:    "",
+			Caption: "",
+			Icon:    IconNone,
+			Button:  ButtonOK,
+		},
+		Result: ResultNone,
 	}
 }
 
-func (mb *msgBox) Show(text1caption2 ...string) *msgBox {
+func (mb *MsgBox) Show(text1caption2 ...string) *MsgBox {
 	if l := len(text1caption2); l >= 1 {
-		mb.Text = text1caption2[0]
+		mb.InnerValue.Text = text1caption2[0]
 		if l >= 2 {
-			mb.Caption = text1caption2[1]
+			mb.InnerValue.Caption = text1caption2[1]
 		}
 	}
-	mb.Result = Result(walk.MsgBox(nil, mb.Caption, mb.Text, walk.MsgBoxStyle(mb.Icon)|walk.MsgBoxStyle(mb.Button)))
+	mb.Result = Result(show(mb.InnerValue.Owner, mb.InnerValue.Caption, mb.InnerValue.Text, uint32(mb.InnerValue.Icon)|uint32(mb.InnerValue.Button)))
 	return mb
 }
 
-func Show(text1caption2 ...string) *msgBox {
+func Show(text1caption2 ...string) *MsgBox {
 	mb := New()
 	return mb.Show(text1caption2...)
+}
+
+func show(owner win.HWND, title, message string, style uint32) int {
+	return int(win.MessageBox(
+		owner,
+		syscall.StringToUTF16Ptr(strings.ReplaceAll(message, "\x00", "␀")),
+		syscall.StringToUTF16Ptr(strings.ReplaceAll(title, "\x00", "␀")),
+		uint32(style)))
 }
 
 // ----------------------------------------------------------------
 //  Icon
 // ----------------------------------------------------------------
 
-func (mb *msgBox) Info() *msgBox {
-	mb.Icon = IconInformation
+func (mb *MsgBox) Info() *MsgBox {
+	mb.InnerValue.Icon = IconInformation
 	return mb
 }
 
-func Info() *msgBox {
+func Info() *MsgBox {
 	mb := New()
 	return mb.Info()
 }
 
-func (mb *msgBox) Err() *msgBox {
-	mb.Icon = IconError
+func (mb *MsgBox) Err() *MsgBox {
+	mb.InnerValue.Icon = IconError
 	return mb
 }
 
-func Err() *msgBox {
+func Err() *MsgBox {
 	mb := New()
 	return mb.Err()
 }
 
-func (mb *msgBox) Warn() *msgBox {
-	mb.Icon = IconWarning
+func (mb *MsgBox) Warn() *MsgBox {
+	mb.InnerValue.Icon = IconWarning
 	return mb
 }
 
-func Warn() *msgBox {
+func Warn() *MsgBox {
 	mb := New()
 	return mb.Warn()
 }
 
-func (mb *msgBox) Ques() *msgBox {
-	mb.Icon = IconQuestion
+func (mb *MsgBox) Ques() *MsgBox {
+	mb.InnerValue.Icon = IconQuestion
 	return mb
 }
 
-func Ques() *msgBox {
+func Ques() *MsgBox {
 	mb := New()
 	return mb.Ques()
 }
@@ -121,62 +157,62 @@ func Ques() *msgBox {
 //  Button
 // ----------------------------------------------------------------
 
-func (mb *msgBox) AbortRetryIgnore() *msgBox {
-	mb.Button = ButtonAbortRetryIgnore
+func (mb *MsgBox) AbortRetryIgnore() *MsgBox {
+	mb.InnerValue.Button = ButtonAbortRetryIgnore
 	return mb
 }
 
-func AbortRetryIgnore() *msgBox {
+func AbortRetryIgnore() *MsgBox {
 	mb := New()
 	return mb.AbortRetryIgnore()
 }
 
-func (mb *msgBox) OK() *msgBox {
-	mb.Button = ButtonOK
+func (mb *MsgBox) OK() *MsgBox {
+	mb.InnerValue.Button = ButtonOK
 	return mb
 }
 
-func OK() *msgBox {
+func OK() *MsgBox {
 	mb := New()
 	return mb.OK()
 }
 
-func (mb *msgBox) OKCancel() *msgBox {
-	mb.Button = ButtonOKCancel
+func (mb *MsgBox) OKCancel() *MsgBox {
+	mb.InnerValue.Button = ButtonOKCancel
 	return mb
 }
 
-func OKCancel() *msgBox {
+func OKCancel() *MsgBox {
 	mb := New()
 	return mb.OKCancel()
 }
 
-func (mb *msgBox) RetryCancel() *msgBox {
-	mb.Button = ButtonRetryCancel
+func (mb *MsgBox) RetryCancel() *MsgBox {
+	mb.InnerValue.Button = ButtonRetryCancel
 	return mb
 }
 
-func RetryCancel() *msgBox {
+func RetryCancel() *MsgBox {
 	mb := New()
 	return mb.RetryCancel()
 }
 
-func (mb *msgBox) YesNo() *msgBox {
-	mb.Button = ButtonYesNo
+func (mb *MsgBox) YesNo() *MsgBox {
+	mb.InnerValue.Button = ButtonYesNo
 	return mb
 }
 
-func YesNo() *msgBox {
+func YesNo() *MsgBox {
 	mb := New()
 	return mb.YesNo()
 }
 
-func (mb *msgBox) YesNoCancel() *msgBox {
-	mb.Button = ButtonYesNoCancel
+func (mb *MsgBox) YesNoCancel() *MsgBox {
+	mb.InnerValue.Button = ButtonYesNoCancel
 	return mb
 }
 
-func YesNoCancel() *msgBox {
+func YesNoCancel() *MsgBox {
 	mb := New()
 	return mb.YesNoCancel()
 }
@@ -185,34 +221,34 @@ func YesNoCancel() *msgBox {
 //  Result
 // ----------------------------------------------------------------
 
-func (mb *msgBox) IsNone() bool {
+func (mb *MsgBox) IsNone() bool {
 	return mb.Result == ResultNone
 }
 
-func (mb *msgBox) IsOK() bool {
+func (mb *MsgBox) IsOK() bool {
 	return mb.Result == ResultOK
 }
 
-func (mb *msgBox) IsCancel() bool {
+func (mb *MsgBox) IsCancel() bool {
 	return mb.Result == ResultCancel
 }
 
-func (mb *msgBox) IsYes() bool {
+func (mb *MsgBox) IsYes() bool {
 	return mb.Result == ResultYes
 }
 
-func (mb *msgBox) IsNo() bool {
+func (mb *MsgBox) IsNo() bool {
 	return mb.Result == ResultNo
 }
 
-func (mb *msgBox) IsAbort() bool {
+func (mb *MsgBox) IsAbort() bool {
 	return mb.Result == ResultAbort
 }
 
-func (mb *msgBox) IsIgnore() bool {
+func (mb *MsgBox) IsIgnore() bool {
 	return mb.Result == ResultIgnore
 }
 
-func (mb *msgBox) IsRetry() bool {
+func (mb *MsgBox) IsRetry() bool {
 	return mb.Result == ResultRetry
 }
